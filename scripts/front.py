@@ -3,7 +3,7 @@ import sys
 import argparse
 import glob
 import time
-
+from utils import *
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -33,7 +33,7 @@ img_source = args.source
 min_thresh = args.thresh
 user_res = args.resolution
 record = args.record
-
+topic = 'Topic'
 # Check if model file exists and is valid
 if (not os.path.exists(model_path)):
     print('ERROR: Model path is invalid or model was not found. Make sure the model filename was entered correctly.')
@@ -47,26 +47,10 @@ labels = model.names
 img_ext_list = ['.jpg','.JPG','.jpeg','.JPEG','.png','.PNG','.bmp','.BMP']
 vid_ext_list = ['.avi','.mov','.mp4','.mkv','.wmv']
 
-if os.path.isdir(img_source):
-    source_type = 'folder'
-elif os.path.isfile(img_source):
-    _, ext = os.path.splitext(img_source)
-    if ext in img_ext_list:
-        source_type = 'image'
-    elif ext in vid_ext_list:
-        source_type = 'video'
-    else:
-        print(f'File extension {ext} is not supported.')
-        sys.exit(0)
-elif 'usb' in img_source:
-    source_type = 'usb'
-    usb_idx = int(img_source[3:])
-elif 'picamera' in img_source:
-    source_type = 'picamera'
-    picam_idx = int(img_source[8:])
-else:
-    print(f'Input {img_source} is invalid. Please try again.')
-    sys.exit(0)
+
+source_type = 'usb'
+usb_idx = int(img_source[3:])
+
 
 # Parse user-specified display resolution
 resW, resH = int(user_res.split('x')[0]), int(user_res.split('x')[1])
@@ -90,80 +74,24 @@ avg_frame_rate = 0
 frame_rate_buffer = []
 fps_avg_len = 200
 img_count = 0
-
+states = {'Plaza_1':True,'Plaza_2':True,'Plaza_3':True}
 # Begin inference loop
+
 while True:
-
-    ret, frame = cap.read()
-    if (frame is None) or (not ret):
-        print('Unable to read frames from the camera. This indicates the camera is disconnected or not working. Exiting program.')
+    #Falta actualizar states desde el servidor mqtt
+    try:
+        frame,detections=get_detections(cap,model)
+    except:
         break
-    # Resize frame to desired display resolution
+
+    spots,objects = process_detections(frame,detections,labels,min_thresh,states,bbox_colors)
+    obj_count = len(spots) + len(objects)
     
-    frame = cv2.resize(frame,(1080,720))
-
-    # Run inference on frame
-    results = model(frame, verbose=False)
-
-    # Extract results
-    detections = results[0].boxes
-
-    # Initialize variable for basic object counting example
-    object_count = 0
-
-    # Go through each detection and get bbox coords, confidence, and class
-    for i in range(len(detections)):
-
-        # Get bounding box coordinates
-        # Ultralytics returns results in Tensor format, which have to be converted to a regular Python array
-        xyxy_tensor = detections[i].xyxy.cpu() # Detections in Tensor format in CPU memory
-        xyxy = xyxy_tensor.numpy().squeeze() # Convert tensors to Numpy array
-        xmin, ymin, xmax, ymax = xyxy.astype(int) # Extract individual coordinates and convert to int
-
-        # Get bounding box class ID and name
-        classidx = int(detections[i].cls.item())
-        classname = labels[classidx]
-
-        # Get bounding box confidence
-        conf = detections[i].conf.item()
-
-        # Draw box if confidence threshold is high enough
-        if conf > min_thresh:
-            color = bbox_colors[classidx % 10]
-            cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), color, 2)
-
-            label = f'{classname}: {int(conf*100)}%'
-            labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1) # Get font size
-            label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
-            cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), color, cv2.FILLED) # Draw white box to put label text in
-            cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1) # Draw label text
-
-            # Basic example: count the number of objects in the image
-            object_count = object_count + 1
-
-    # Display detection results
-    cv2.putText(frame, f'Number of objects: {object_count}', (10,20), cv2.FONT_HERSHEY_SIMPLEX, .7, (0,255,255), 2) # Draw total number of detected objects
-    cv2.imshow('YOLO detection results',frame) # Display image
-
-    # If inferencing on individual images, wait for user keypress before moving to next image. Otherwise, wait 5ms before moving to next frame.
-    if source_type == 'image' or source_type == 'folder':
-        key = cv2.waitKey()
-    elif source_type == 'video' or source_type == 'usb' or source_type == 'picamera':
-        key = cv2.waitKey(5)
+    display_detections(frame,obj_count)
     
-    if key == ord('q') or key == ord('Q'): # Press 'q' to quit
-        break
-    elif key == ord('s') or key == ord('S'): # Press 's' to pause inference
-        cv2.waitKey()
-    elif key == ord('p') or key == ord('P'): # Press 'p' to save a picture of results on this frame
-        cv2.imwrite('capture.png',frame)
+    process_front(frame,spots,objects,states,topic)
 
-
-
-# Clean up
-print(f'Average pipeline FPS: {avg_frame_rate:.2f}')
-if source_type == 'video' or source_type == 'usb':
-    cap.release()
-elif source_type == 'picamera':
-    cap.stop()
+    if(get_controls(frame)):break
+    
+cap.release()
 cv2.destroyAllWindows()
