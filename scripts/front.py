@@ -4,6 +4,7 @@ import argparse
 import glob
 import time
 from utils import *
+from ocr import *
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -12,7 +13,7 @@ from ultralytics import YOLO
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', help='Path to YOLO model file (example: "runs/detect/train/weights/best.pt")',
-                    default='../models/front.pt')
+                    default='../models/front_ncnn_model')
 parser.add_argument('--source', help='Image source, can be image file ("test.jpg"), \
                     image folder ("test_dir"), video file ("testvid.mp4"), index of USB camera ("usb0"), or index of Picamera ("picamera0")', 
                     required=True)
