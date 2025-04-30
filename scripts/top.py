@@ -7,6 +7,7 @@ from utils import *
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import paho.mqtt.client as mqtt
 
 # Define and parse user input arguments
 
@@ -33,7 +34,6 @@ img_source = args.source
 min_thresh = args.thresh
 user_res = args.resolution
 record = args.record
-topic = 'Topic'
 # Check if model file exists and is valid
 if (not os.path.exists(model_path)):
     print('ERROR: Model path is invalid or model was not found. Make sure the model filename was entered correctly.')
@@ -77,6 +77,21 @@ img_count = 0
 states = {'Plaza_1':True,'Plaza_2':True,'Plaza_3':True}
 # Begin inference loop
 
+def on_connect(client, userdata):
+    print('Connectec to mqtt server')
+    client.subscribe([
+    ("parking/Plaza_1", 0),
+    ("parking/Plaza_2", 0),
+    ("parking/Plaza_3", 0)
+])
+
+BROKER = ''
+PORT = ''
+client = mqtt.Client(client_id = 'Front')
+client.on_connnect = on_connect
+client.connect(BROKER,PORT,60)
+client.loop_start()
+
 while True:
     try:
         frame,detections=get_detections(cap,model)
@@ -88,7 +103,7 @@ while True:
     
     display_detections(frame,obj_count)
     
-    process_top(spots,objects,states,topic)
+    process_top(spots,objects,states,client)
 
     if(get_controls(frame)):break
     

@@ -9,7 +9,6 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 import paho.mqtt.client as mqtt
-    
 
 
 # Define and parse user input arguments

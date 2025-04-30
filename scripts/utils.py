@@ -20,8 +20,8 @@ def draw_box(frame,color,classname,conf,xmin,ymin,xmax,ymax):
     cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), color, cv2.FILLED) # Draw white box to put label text in
     cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1) # Draw label text
 
-def send_message(topic,msg):
-    print(f'{topic}:{msg}')
+def send_message(client,topic,msg):
+    client.publish(f'parking/{topic}',msg)
 
 def get_detections(cap,model):
     ret, frame = cap.read()
@@ -73,18 +73,16 @@ def display_detections(frame,obj_count):
     cv2.putText(frame, f'Number of objects: {obj_count}', (10,20), cv2.FONT_HERSHEY_SIMPLEX, .7, (0,255,255), 2) # Draw total number of detected objects
     cv2.imshow('YOLO detection results',frame) # Display image
 
-def process_top(spots,objects,states,topic):
+def process_top(spots,objects,states,client):
     for name,box in spots:
         is_in = check_in(box,objects) 
         occupied = any(is_in)
         if occupied and states[name]:
-            msg = f'{name}: Ocupado'
-            send_message(topic,msg)
+            send_message(client,name,1)
             states[name] = False
 
         if not occupied and not states[name]:
-            msg = f'{name} Libre'
-            send_message(topic, msg)
+            send_message(client,name,0)
             states[name] = True
                         
             
