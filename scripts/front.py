@@ -8,6 +8,9 @@ from ocr import *
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import paho.mqtt.client as mqtt
+    
+
 
 # Define and parse user input arguments
 
@@ -34,7 +37,7 @@ img_source = args.source
 min_thresh = args.thresh
 user_res = args.resolution
 record = args.record
-topic = 'Topic'
+
 # Check if model file exists and is valid
 if (not os.path.exists(model_path)):
     print('ERROR: Model path is invalid or model was not found. Make sure the model filename was entered correctly.')
@@ -48,14 +51,11 @@ labels = model.names
 img_ext_list = ['.jpg','.JPG','.jpeg','.JPEG','.png','.PNG','.bmp','.BMP']
 vid_ext_list = ['.avi','.mov','.mp4','.mkv','.wmv']
 
-
 source_type = 'usb'
 usb_idx = int(img_source[3:])
 
-
 # Parse user-specified display resolution
 resW, resH = int(user_res.split('x')[0]), int(user_res.split('x')[1])
-
 
 if source_type == 'video': cap_arg = img_source
 elif source_type == 'usb': cap_arg = usb_idx
@@ -75,11 +75,40 @@ avg_frame_rate = 0
 frame_rate_buffer = []
 fps_avg_len = 200
 img_count = 0
-states = {'Plaza_1':True,'Plaza_2':True,'Plaza_3':True}
+states = {'Plaza_1':False,'Plaza_2':False,'Plaza_3':False}
 # Begin inference loop
 
+
+def on_message(client,userdata,msg):
+    global states
+    try:
+        #{Plaza_i:0/1}
+        payload = msg.payload.decode()
+        if len(payload == 1):
+            value = int(payload)
+            #Ocupado 2 libre 1
+            states[msg.topic.split('/')[-1]] = value == 1
+    except Exception as e:
+        print(e)
+
+def on_connect(client, userdata):
+    print('Connectec to mqtt server')
+    client.subscribe([
+    ("parking/Plaza_1", 0),
+    ("parking/Plaza_2", 0),
+    ("parking/Plaza_3", 0)
+])
+    
+BROKER = ''
+PORT = ''
+client = mqtt.Client(client_id = 'Front')
+client.on_message = on_message
+client.on_connnect = on_connect
+client.connect(BROKER,PORT,60)
+client.loop_start()
+
 while True:
-    #Falta actualizar states desde el servidor mqtt
+
     try:
         frame,detections=get_detections(cap,model)
     except:

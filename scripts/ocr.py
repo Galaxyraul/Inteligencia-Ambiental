@@ -10,10 +10,10 @@ def process_front(frame,spots,objects,states,topic):
     for name, box in spots:
         is_in = check_in(box, objects)
 
-        occupied = any(is_in)
+        to_read = any(is_in)
 
-        if occupied:
-            if states[name]:  # Was free before → now occupied
+        if to_read:
+            if states[name]:  
                 # Find the first object that is inside
                 for idx, inside in enumerate(is_in):
                     if inside:
@@ -28,7 +28,6 @@ def process_front(frame,spots,objects,states,topic):
 
                         # Process OCR results and print detected text
                         if result:
-                            
                             for line in result:
                                 if line:
                                     for word_info in line:
@@ -37,4 +36,5 @@ def process_front(frame,spots,objects,states,topic):
                                         if confidence > 0.5:  # Adjust this threshold as needed
                                             send_message(topic,f'{name}:{text}')
                                             print(f"Detected Text: {text} with confidence: {confidence:.2f}")
-                        break 
+                                            states[name] = False
+                            break 
