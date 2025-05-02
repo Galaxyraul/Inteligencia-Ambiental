@@ -77,17 +77,12 @@ img_count = 0
 states = {'Plaza_1':True,'Plaza_2':True,'Plaza_3':True}
 # Begin inference loop
 
-def on_connect(client, userdata):
-    print('Connectec to mqtt server')
-    client.subscribe([
-    ("parking/Plaza_1", 0),
-    ("parking/Plaza_2", 0),
-    ("parking/Plaza_3", 0)
-])
+def on_connect(client, userdata, flags, rc):
+    print('Connected to mqtt server')
 
-BROKER = ''
-PORT = ''
-client = mqtt.Client(client_id = 'Front')
+BROKER = '192.168.202.2'
+PORT = 1883
+client = mqtt.Client(client_id = 'TOP')
 client.on_connnect = on_connect
 client.connect(BROKER,PORT,60)
 client.loop_start()
