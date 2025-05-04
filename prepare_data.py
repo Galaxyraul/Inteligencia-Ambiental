@@ -21,7 +21,7 @@ def create_data_yaml(path_to_classes_txt, path_to_data_yaml):
 
   # Create data dictionary
   data = {
-      'path': '/home/galaxy/Escritorio/yolo/data',
+      'path': '/home/galaxy/Escritorio/Inteligencia-Ambiental/data',
       'train': 'train/images',
       'val': 'validation/images',
       'nc': number_of_classes,
@@ -36,7 +36,7 @@ def create_data_yaml(path_to_classes_txt, path_to_data_yaml):
   return
 
 # Define path to classes.txt and run function
-path_to_classes_txt = 'front_images/classes.txt'
+path_to_classes_txt = 'data/classes.txt'
 path_to_data_yaml = 'front.yaml'
 
 create_data_yaml(path_to_classes_txt, path_to_data_yaml)

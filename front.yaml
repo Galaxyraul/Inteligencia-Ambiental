@@ -1,0 +1,9 @@
+path: /home/galaxy/Escritorio/Inteligencia-Ambiental/data
+train: train/images
+val: validation/images
+nc: 4
+names:
+- Plate
+- Plaza_1
+- Plaza_2
+- Plaza_3
