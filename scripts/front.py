@@ -74,35 +74,38 @@ avg_frame_rate = 0
 frame_rate_buffer = []
 fps_avg_len = 200
 img_count = 0
-states = {'Plaza_1':False,'Plaza_2':False,'Plaza_3':False}
+states = {'Matricula_1':False,'Matricula_2':False,'Matricula_3':False}
 # Begin inference loop
 
 
-def on_message(client,userdata,msg):
+def on_message(client, userdata, msg):
     global states
     try:
         #{Plaza_i:0/1}
-        payload = msg.payload.decode()
-        if len(payload == 1):
+        payload = str(msg.payload.decode())
+        print(type(payload))
+        if len(payload)  == 1:
             value = int(payload)
             #Ocupado 2 libre 1
             states[msg.topic.split('/')[-1]] = value == 1
+            print(states)
     except Exception as e:
         print(e)
 
-def on_connect(client, userdata):
-    print('Connectec to mqtt server')
+def on_connect(client, userdata, flags, rc):
+    print('Connected to mqtt server')
     client.subscribe([
-    ("parking/Plaza_1", 0),
-    ("parking/Plaza_2", 0),
-    ("parking/Plaza_3", 0)
-])
+    ("parking/Matricula_1", 0),
+    ("parking/Matricula_2", 0),
+    ("parking/Matricula_3", 0)
+    ])
+
     
-BROKER = ''
-PORT = ''
-client = mqtt.Client(client_id = 'Front')
+BROKER = '192.168.202.2'
+PORT = 1883
+client = mqtt.Client(client_id = 'FRONT')
+client.on_connect = on_connect
 client.on_message = on_message
-client.on_connnect = on_connect
 client.connect(BROKER,PORT,60)
 client.loop_start()
 
@@ -118,7 +121,7 @@ while True:
     
     display_detections(frame,obj_count)
     
-    process_front(frame,spots,objects,states,topic)
+    process_front(frame,spots,objects,states,client)
 
     if(get_controls(frame)):break
     
