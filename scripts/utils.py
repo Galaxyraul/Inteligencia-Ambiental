@@ -21,7 +21,8 @@ def draw_box(frame,color,classname,conf,xmin,ymin,xmax,ymax):
     cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1) # Draw label text
 
 def send_message(client,topic,msg):
-    client.publish(f'parking/{topic}',msg)
+    print(f'Sending {msg} to {topic}')
+    client.publish(f'parking{topic}',msg)
 
 def get_detections(cap,model):
     ret, frame = cap.read()
@@ -53,7 +54,6 @@ def process_detections(frame,detections,labels,min_thresh,states,bbox_colors):
         # Get bounding box class ID and name
         classidx = int(detections[i].cls.item())
         classname = labels[classidx]
-
         # Get bounding box confidence
         conf = detections[i].conf.item()
 
@@ -78,11 +78,11 @@ def process_top(spots,objects,states,client):
         is_in = check_in(box,objects) 
         occupied = any(is_in)
         if occupied and states[name]:
-            send_message(client,name,1)
+            send_message(client,f'/plaza/{name[-1]}',1)
             states[name] = False
 
         if not occupied and not states[name]:
-            send_message(client,name,0)
+            send_message(client,f'/plaza/{name[-1]}',0)
             states[name] = True
                         
             

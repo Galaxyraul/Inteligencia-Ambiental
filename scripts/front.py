@@ -74,7 +74,7 @@ avg_frame_rate = 0
 frame_rate_buffer = []
 fps_avg_len = 200
 img_count = 0
-states = {'Matricula_1':False,'Matricula_2':False,'Matricula_3':False}
+states = {'Plaza_1':False,'Plaza_2':False,'Plaza_3':False}
 # Begin inference loop
 
 
@@ -83,11 +83,11 @@ def on_message(client, userdata, msg):
     try:
         #{Plaza_i:0/1}
         payload = str(msg.payload.decode())
-        print(type(payload))
+        print(payload)
         if len(payload)  == 1:
             value = int(payload)
             #Ocupado 2 libre 1
-            states[msg.topic.split('/')[-1]] = value == 1
+            states['Plaza_' + msg.topic[-1]] = value == 1
             print(states)
     except Exception as e:
         print(e)
@@ -95,13 +95,13 @@ def on_message(client, userdata, msg):
 def on_connect(client, userdata, flags, rc):
     print('Connected to mqtt server')
     client.subscribe([
-    ("parking/Matricula_1", 0),
-    ("parking/Matricula_2", 0),
-    ("parking/Matricula_3", 0)
+    ("parking/plaza/1", 0),
+    ("parking/plaza/2", 0),
+    ("parking/plaza/3", 0)
     ])
 
     
-BROKER = '192.168.202.2'
+BROKER = '192.168.87.3'
 PORT = 1883
 client = mqtt.Client(client_id = 'FRONT')
 client.on_connect = on_connect

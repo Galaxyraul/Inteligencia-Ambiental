@@ -80,7 +80,7 @@ states = {'Plaza_1':True,'Plaza_2':True,'Plaza_3':True}
 def on_connect(client, userdata, flags, rc):
     print('Connected to mqtt server')
 
-BROKER = '192.168.202.2'
+BROKER = '192.168.87.3'
 PORT = 1883
 client = mqtt.Client(client_id = 'TOP')
 client.on_connnect = on_connect

@@ -9,9 +9,7 @@ ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
 def process_front(frame,spots,objects,states,client):
     for name, box in spots:
         is_in = check_in(box, objects)
-
         to_read = any(is_in)
-
         if to_read:
             if states[name]:  
                 # Find the first object that is inside
@@ -34,7 +32,7 @@ def process_front(frame,spots,objects,states,client):
                                         text = word_info[1][0]          # Detected text
                                         confidence = word_info[1][1]    # Confidence score
                                         if confidence > 0.5:  # Adjust this threshold as needed
-                                            send_message(client,name,text)
+                                            send_message(client,f'/matricula/{name[-1]}',text)
                                             print(f"Detected Text: {text} with confidence: {confidence:.2f}")
                                             states[name] = False
                             break 
